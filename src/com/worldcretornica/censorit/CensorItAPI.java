@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Random;
 
 public final class CensorItAPI {
 	
@@ -13,6 +15,7 @@ public final class CensorItAPI {
 	private static boolean _IgnoreSpecialCharacters = true;
 	private static boolean _IgnoreSpaces = true;
 	private static boolean _ReplaceWithHappyWords = false;
+	private static String _OnlineDictionaryURL = "http://dictionary.cambridge.org/search/british/direct/?q=<word>";
 	
 	private static HashSet<String> _CensorList = new HashSet<String>();
 	private static HashSet<String> _HappyList = new HashSet<String>();
@@ -22,22 +25,97 @@ public final class CensorItAPI {
 		//TODO implement censor
 		//Check existing words
 		//Replace with happy words or *
-		return "";
+		
+		ArrayList<Word> wordlist = new ArrayList<Word>();
+		int ctr = 0;
+		
+		for(String word : text.split(" "))
+		{
+			Word w = new Word();
+			w.Text = word;
+			w.Position = ctr;
+			w.Verified = false;
+			w.Curse = false;
+			
+			wordlist.add(w);
+		}
+		
+		
+		
+		for(Word w: wordlist)
+		{
+			//Check if the word exists
+			if (_VerifyWordOnline)
+			{
+				if (IsExistingWord(RemoveSpecial(w.Text)))
+					w.Verified = true;
+			}
+			
+			for(String censor: _CensorList)
+			{
+				//Check if it's in the curse list
+				if(RemoveSpecial(ReplaceSpecial(w.Text)).contains(censor))
+				{
+					w.Curse = true;
+					
+					if (_ReplaceWithHappyWords && _HappyList.size() > 0)
+					{
+						Random rand = new Random();
+						int i = rand.nextInt(_HappyList.size());
+					
+						w.Text = RemoveSpecial(ReplaceSpecial(w.Text)).replace(censor, (String) _HappyList.toArray()[i]);
+					}else{
+						w.Text = RemoveSpecial(ReplaceSpecial(w.Text)).replace(censor, repeat('*',censor.length()));
+					}
+					
+				}
+			}
+		}
+		
+		//Rebuild the string
+		String str = "";
+		for(Word w: wordlist)
+		{
+			str = str + " " + w.Text;
+		}
+		
+		return str.trim();
 	}
-
 	
+	
+	private static String repeat(char c,int i)
+    {
+	    String s = "";
+	    for(int j = 0; j < i; j++)
+	    {
+	        s = s + c;
+	    }
+	    return s;
+	}
+	
+	
+	public static String RemoveSpecial(String word)
+	{
+		return word.replaceAll("[^A-Za-z0-9*]", "");
+	}
+	
+	public static String ReplaceSpecial(String word)
+	{
+		return word.replace("4", "a").replace("1", "i").replace("@", "a")
+				.replace("3", "e").replace("!", "i").replace("5", "s")
+				.replace("$", "s").replace("0", "o");
+	}
+		
 	public static boolean IsExistingWord(String word)
 	{
-		if (_VerifyWordOnline)
+		if (_VerifyWordOnline && word.length() > 3)
 		{
 			InputStream result = null;
 			BufferedReader reader = null;
 			String line = null;
 						
 			try {
-				//result = new URL("http://dictionary.cambridge.org/dictionary/british/" + word + "?q=" + word).openStream();
-				//utm_source=widget_searchbox_source&utm_medium=widget_searchbox&utm_campaign=widget_tracking&
-				result = new URL("http://dictionary.cambridge.org/search/british/direct/?q=" + word).openStream();
+				result = new URL(_OnlineDictionaryURL.replace("<word>", word)).openStream();
 				reader = new BufferedReader(new InputStreamReader(result));
 				
 				while ((line = reader.readLine()) != null){
@@ -61,11 +139,6 @@ public final class CensorItAPI {
 				} catch (IOException e) {}
 			}
 			
-			
-						
-			//TODO implement online word verification
-		
-			//http://dictionary.cambridge.org/learnenglish/results.asp?searchword='+text+ '&dict=L
 			return false;
 		}else
 			return false;
@@ -165,6 +238,11 @@ public final class CensorItAPI {
 		_ReplaceWithHappyWords = b;
 	}
 	
+	public static void SetOnlineDictionary(String s)
+	{
+		_OnlineDictionaryURL = s;
+	}
+	
 	public static boolean GetVerifyWordOnline()
 	{
 		return _VerifyWordOnline; 
@@ -183,5 +261,10 @@ public final class CensorItAPI {
 	public static boolean GetReplaceWithHappyWords()
 	{
 		return _ReplaceWithHappyWords;
+	}
+	
+	public static String GetOnlineDictionary()
+	{
+		return _OnlineDictionaryURL;
 	}
 }

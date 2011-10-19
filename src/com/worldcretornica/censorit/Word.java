@@ -5,6 +5,15 @@ public class Word
 	public String Text = "";
 	public boolean Verified = false;
 	public boolean Curse = false;
-	public int Position;
 	public Word(){}
+	
+	public Word clone()
+	{
+		Word T = new Word();
+		T.Text = this.Text;
+		T.Curse = this.Curse;
+		T.Verified = this.Verified;
+		
+		return T;
+	}
 }

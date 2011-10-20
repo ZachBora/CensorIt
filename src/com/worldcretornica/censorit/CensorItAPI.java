@@ -14,8 +14,8 @@ import java.util.regex.Pattern;
 public final class CensorItAPI {
 	
 	private static boolean _VerifyWordOnline = false;
-	private static boolean _IgnoreSpecialCharacters = true;
-	private static boolean _IgnoreSpaces = true;
+	//private static boolean _IgnoreSpecialCharacters = true;
+	//private static boolean _IgnoreSpaces = true;
 	private static boolean _ReplaceWithHappyWords = false;
 	private static boolean _RandomReplacementChar = true;
 	private static String _OnlineDictionaryURL = "http://dictionary.cambridge.org/search/british/direct/?q=<word>";
@@ -422,7 +422,7 @@ public final class CensorItAPI {
 		_VerifyWordOnline = b;
 	}
 	
-	public static void setIgnoreSpecialCharacters(boolean b)
+	/*public static void setIgnoreSpecialCharacters(boolean b)
 	{
 		_IgnoreSpecialCharacters = b;
 	}
@@ -430,7 +430,7 @@ public final class CensorItAPI {
 	public static void setIgnoreSpaces(boolean b)
 	{
 		_IgnoreSpaces = b;
-	}
+	}*/
 	
 	public static void setReplaceWithHappyWords(boolean b)
 	{
@@ -452,7 +452,7 @@ public final class CensorItAPI {
 		return _VerifyWordOnline; 
 	}
 		
-	public static boolean getIgnoreSpecialCharacters()
+	/*public static boolean getIgnoreSpecialCharacters()
 	{
 		return _IgnoreSpecialCharacters;
 	}
@@ -460,7 +460,7 @@ public final class CensorItAPI {
 	public static boolean getIgnoreSpaces()
 	{
 		return _IgnoreSpaces;
-	}
+	}*/
 
 	public static boolean getReplaceWithHappyWords()
 	{

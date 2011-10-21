@@ -271,6 +271,7 @@ public final class CensorItAPI {
 						{
 							reader.close();
 							result.close();
+							addAllowedWord(word.toLowerCase());
 							return true;
 						}
 						if(line.contains("</head>"))

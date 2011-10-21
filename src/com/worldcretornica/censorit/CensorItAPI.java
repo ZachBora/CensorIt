@@ -481,4 +481,19 @@ public final class CensorItAPI {
 	{
 		return _RandomReplacementChar;
 	}
+	
+	public static boolean isCensoredWord(String word)
+	{
+		return _CensorList.contains(word);
+	}
+	
+	public static boolean isHappyWord(String word)
+	{
+		return _HappyList.contains(word);
+	}
+	
+	public static boolean isAllowedWord(String word)
+	{
+		return _AllowedList.contains(word);
+	}
 }

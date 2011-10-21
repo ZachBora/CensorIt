@@ -1,0 +1,48 @@
+name: CensorIt
+main: com.worldcretornica.censorit.CensorIt
+version: 0.1
+description: >
+             Censoring API and plugin to remove all those dirty words
+commands:
+    censorit:
+        description: Lists the commands
+        usage: censorit
+    censorit censor:
+        description: Adds a word to the censored list
+        usage: censorit censor word
+    censorit allow:
+        description: Adds a word to the allowed list
+        usage: censorit allow word
+    censorit uncensor:
+        description: Removes a word from the censored list
+        usage: censorit uncensor word
+    censorit unallow:
+        description: Removes a word from the allowed list
+        usage: censorit unallow word
+    censorit replace:
+        description: Adds a word to the happy list
+        usage: censorit replace word
+    censorit unreplace:
+        description: Removes a word to the happy list
+        usage: censorit unreplace word
+    censorit enable:
+        description: Enables chat censoring
+        usage: censorit enable
+    censorit disable:
+        description: Disables chat censoring
+        usage: censorit disable
+    censorit on:
+        description: Enables censoring for the current player
+        usage: censorit on
+    censorit off:
+        description: Disables censoring for the current player
+        usage: censorit off
+    censorit reload:
+        description: Reloads configuration
+        usage: censorit reload
+    censorit verify:
+        description: Enables online word verification
+        usage: censorit verify
+    censorit unverify:
+        description: Disables online word verification
+        usage: censorit unverify

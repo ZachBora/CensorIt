@@ -1,5 +1,10 @@
 package com.worldcretornica.censorit;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.logging.Logger;
 
@@ -29,25 +34,41 @@ public class CensorIt extends JavaPlugin {
 	
 	public boolean isEnabled = true;
 	
+	public final String censorfilename = "censored.txt";
+	public final String allowedfilename = "allowed.txt";
+	public final String replacementfilename = "replacement.txt";
+	
 	// Permissions
     public PermissionHandler permissions;
     boolean permissions3;
 	
 	@Override
 	public void onDisable() {
+		saveAllConfig();
 		this.logger.info(pdfdescription + " disabled.");
 	}
 
 	@Override
 	public void onEnable() {
 		PluginManager pm = getServer().getPluginManager();
-		pm.registerEvent(Event.Type.PLAYER_CHAT, this.chatlistener, Event.Priority.Highest, this);
+		pm.registerEvent(Event.Type.PLAYER_CHAT, this.chatlistener, Event.Priority.Lowest, this);
 		
 		PluginDescriptionFile pdfFile = this.getDescription();
 		pdfdescription = pdfFile.getName();
 		pdfversion = pdfFile.getVersion();
 		
 		setupPermissions();
+		loadAllConfig();
+		
+		//Auto-save code
+		/*
+		this.getServer().getScheduler().scheduleAsyncRepeatingTask(this, new Runnable() {
+		    public void run() {
+		    	saveAllConfig();
+		        logger.info("[" + pdfdescription + "] Auto-Saving configuration");
+		    }
+		}, 60L, 6000L);
+		*/
 		
 		this.logger.info(pdfdescription + " version " + pdfversion + " is enabled!");
 	}
@@ -56,7 +77,7 @@ public class CensorIt extends JavaPlugin {
 	public boolean onCommand(CommandSender s, Command c, String l, String[] args) {
 		if (l.equalsIgnoreCase("censorit"))
 		{
-			if(args.length == 0)
+			if(args.length == 0 || args.length > 2)
 			{
 				s.sendMessage(ChatColor.BLUE + pdfdescription + " v" + pdfversion + " - Help");
 				s.sendMessage(ChatColor.RED + "/censorit on" + ChatColor.WHITE + " Turn on censoring.");
@@ -91,9 +112,12 @@ public class CensorIt extends JavaPlugin {
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
 					}else{
 						s.sendMessage(ChatColor.BLUE + pdfdescription + " v" + pdfversion + " - Configuration Commands");
-						s.sendMessage(ChatColor.RED + "/censorit censor|uncensor " + ChatColor.GREEN + "<word>" + ChatColor.WHITE + " Censor or uncensor a word. (e.g. ass, fuck)");
-						s.sendMessage(ChatColor.RED + "/censorit allow|unallow " + ChatColor.GREEN + "<word>" + ChatColor.WHITE + " Allow or unallow a word. (e.g. gr" + ChatColor.RED + "ass" + ChatColor.WHITE + ", " + ChatColor.RED + "assass" + ChatColor.WHITE + "in)");
-						s.sendMessage(ChatColor.RED + "/censorit replace|unreplace " + ChatColor.GREEN + "<word>" + ChatColor.WHITE + " Add or remove a replacement word. (e.g. bird, flower)");
+						s.sendMessage(ChatColor.RED + "/censorit censor|uncensor " + ChatColor.GREEN + "<word>");
+						s.sendMessage(ChatColor.WHITE + " Censor or uncensor a word. (e.g. ass, fuck)");
+						s.sendMessage(ChatColor.RED + "/censorit allow|unallow " + ChatColor.GREEN + "<word>");
+						s.sendMessage(ChatColor.WHITE + " Allow or unallow a word. (e.g. gr" + ChatColor.RED + "ass" + ChatColor.WHITE + ", " + ChatColor.RED + "assass" + ChatColor.WHITE + "in)");
+						s.sendMessage(ChatColor.RED + "/censorit replace|unreplace " + ChatColor.GREEN + "<word>");
+						s.sendMessage(ChatColor.WHITE + " Add or remove a replacement word. (e.g. bird, flower)");
 					}
 				}else if(args[0].toString().equalsIgnoreCase("on"))
 				{
@@ -133,7 +157,8 @@ public class CensorIt extends JavaPlugin {
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
 					}else{
-						//TODO
+						loadAllConfig();
+						s.sendMessage(pdfdescription + " configuration reloaded!");
 					}
 				}else if(args[0].toString().equalsIgnoreCase("verify"))
 				{
@@ -142,6 +167,7 @@ public class CensorIt extends JavaPlugin {
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
 					}else{
 						CensorItAPI.setVerifyWordOnline(true);
+						s.sendMessage("Words are now verified online, system might get slower!");
 					}
 				}else if(args[0].toString().equalsIgnoreCase("unverify"))
 				{
@@ -150,6 +176,7 @@ public class CensorIt extends JavaPlugin {
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
 					}else{
 						CensorItAPI.setVerifyWordOnline(false);
+						s.sendMessage("Words are no longer verified online.");
 					}
 				}
 			}else if(args.length == 2)
@@ -160,7 +187,14 @@ public class CensorIt extends JavaPlugin {
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
 					}else{
-						CensorItAPI.addCensoredWord(args[1]);
+						if(CensorItAPI.isCensoredWord(args[1]))
+						{
+							s.sendMessage(ChatColor.RED + args[1] + " is already censored.");
+						}else{
+							CensorItAPI.addCensoredWord(args[1]);
+							s.sendMessage(args[1] + " is now censored.");
+							saveFile(CensorItAPI.getCensoredWords(), censorfilename);
+						}
 					}
 				}else if(args[0].toString().equalsIgnoreCase("uncensor"))
 				{
@@ -168,7 +202,14 @@ public class CensorIt extends JavaPlugin {
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
 					}else{
-						CensorItAPI.removeCensoredWord(args[1]);
+						if(!CensorItAPI.isCensoredWord(args[1]))
+						{
+							s.sendMessage(ChatColor.RED + args[1] + " is not censored.");
+						}else{
+							CensorItAPI.removeCensoredWord(args[1]);
+							s.sendMessage(args[1] + " is no longer censored.");
+							saveFile(CensorItAPI.getCensoredWords(), censorfilename);
+						}
 					}
 				}else if(args[0].toString().equalsIgnoreCase("allow"))
 				{
@@ -176,7 +217,14 @@ public class CensorIt extends JavaPlugin {
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
 					}else{
-						CensorItAPI.addAllowedWord(args[1]);
+						if(CensorItAPI.isAllowedWord(args[1]))
+						{
+							s.sendMessage(ChatColor.RED + args[1] + " is already allowed.");
+						}else{
+							CensorItAPI.addAllowedWord(args[1]);
+							s.sendMessage(args[1] + " is now allowed.");
+							saveFile(CensorItAPI.getAllowedWords(), allowedfilename);
+						}
 					}
 				}else if(args[0].toString().equalsIgnoreCase("unallow"))
 				{
@@ -184,7 +232,14 @@ public class CensorIt extends JavaPlugin {
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
 					}else{
-						CensorItAPI.removeAllowedWord(args[1]);
+						if(!CensorItAPI.isAllowedWord(args[1]))
+						{
+							s.sendMessage(ChatColor.RED + args[1] + " is not allowed.");
+						}else{
+							CensorItAPI.removeAllowedWord(args[1]);
+							s.sendMessage(args[1] + " is no longer allowed.");
+							saveFile(CensorItAPI.getAllowedWords(), allowedfilename);
+						}
 					}
 				}else if(args[0].toString().equalsIgnoreCase("replace"))
 				{
@@ -192,7 +247,14 @@ public class CensorIt extends JavaPlugin {
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
 					}else{
-						CensorItAPI.addHappyWord(args[1]);
+						if(CensorItAPI.isHappyWord(args[1]))
+						{
+							s.sendMessage(ChatColor.RED + args[1] + " is already a replacement.");
+						}else{
+							CensorItAPI.addHappyWord(args[1]);
+							s.sendMessage(args[1] + " is now a replacement.");
+							saveFile(CensorItAPI.getHappyWords(), replacementfilename);
+						}
 					}
 				}else if(args[0].toString().equalsIgnoreCase("unreplace"))
 				{
@@ -200,7 +262,14 @@ public class CensorIt extends JavaPlugin {
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
 					}else{
-						CensorItAPI.removeHappyWord(args[1]);
+						if(!CensorItAPI.isHappyWord(args[1]))
+						{
+							s.sendMessage(ChatColor.RED + args[1] + " is not a replacement.");
+						}else{
+							CensorItAPI.removeHappyWord(args[1]);
+							s.sendMessage(args[1] + " is no longer a replacement.");
+							saveFile(CensorItAPI.getHappyWords(), replacementfilename);
+						}
 					}
 				}
 			}
@@ -214,9 +283,100 @@ public class CensorIt extends JavaPlugin {
 	
 	
 	
+	private void loadAllConfig() {
+		File dir = new File(this.getDataFolder(), "");
+		dir.mkdirs();
+				
+		CensorItAPI.setCensoredWords(loadFile(censorfilename));
+		CensorItAPI.setAllowedWords(loadFile(allowedfilename));
+		CensorItAPI.setHappyWords(loadFile(replacementfilename));
+	}
 	
+	private void saveAllConfig() {
+		saveFile(CensorItAPI.getCensoredWords(), censorfilename);
+		saveFile(CensorItAPI.getAllowedWords(), allowedfilename);
+		saveFile(CensorItAPI.getHappyWords(), replacementfilename);
+	}
 	
+	private void saveFile(HashSet<String> words, String name)
+	{
+		File file;
+		FileWriter writer = null;
+		
+		file = new File(this.getDataFolder(), name);
+		
+		if(!file.exists())
+		{
+			try {
+				file.createNewFile();
+			} catch (IOException e) {
+				logger.severe("[" + pdfdescription + "] Unable to create login config file!");
+				logger.severe(e.getMessage());
+			}
+		}
+		
+		try{		
+			writer = new FileWriter(file);
+			
+			for(String str: words)
+			{
+				writer.write(str + "\n");
+			}
+			
+			writer.close();
+			
+		}catch (IOException e){
+			logger.severe("[" + pdfdescription + "] Unable to create login config file!");
+			logger.severe(e.getMessage());
+		} finally {                      
+			if (writer != null) try {
+				writer.close();
+			} catch (IOException e2) {}
+		}
+	}
 	
+	private HashSet<String> loadFile(String name) {
+		HashSet<String> words = new HashSet<String>();
+		FileReader reader = null;
+		BufferedReader br = null;
+		
+		File file  = new File(this.getDataFolder(), name);
+		
+		if(!file.exists())
+		{
+			try {
+				file.createNewFile();
+			} catch (IOException e) {
+				logger.severe("[" + pdfdescription + "] Unable to create login config file!");
+				logger.severe(e.getMessage());
+			}
+			words = new HashSet<String>();
+		}else{
+			try{
+				reader = new FileReader(file);
+				br = new BufferedReader(reader);
+							
+				String line;
+			    while((line = br.readLine()) != null)
+			    	words.add(line);
+			    br.close();
+			    reader.close();
+				
+			}catch (IOException e){
+				logger.severe("[" + pdfdescription + "] Unable to read quote config file!");
+				logger.severe(e.getMessage());
+			} finally {     
+				if (br != null) try{
+					br.close();
+				} catch (IOException e2) {}
+				if (reader != null) try {
+					reader.close();
+				} catch (IOException e2) {}
+			}
+		}
+		
+		return words;
+	}
 	
 	
 	

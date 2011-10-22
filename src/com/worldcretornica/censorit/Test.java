@@ -7,7 +7,7 @@ public class Test {
 	 */
 	public static void main(String[] args) {
 		
-		//CensorItAPI.setVerifyWordOnline(true);
+		CensorItAPI.setVerifyWordOnline(true);
 		CensorItAPI.addCensoredWord("shit");
 		CensorItAPI.addCensoredWord("ass");
 		CensorItAPI.addCensoredWord("cock");
@@ -29,7 +29,7 @@ public class Test {
 		
 		String s = "5hit b00bs p3n1s";
 		boolean c = false;
-		/*System.out.println(s + " -> " + CensorItAPI.censor(s, c));
+		System.out.println(s + " -> " + CensorItAPI.censor(s, c));
 		s = "ass asstruck";
 		System.out.println(s + " -> " + CensorItAPI.censor(s, c));
 		s = "fucktruckass";
@@ -67,9 +67,11 @@ public class Test {
 		s = "I WANT AN ASS GRASS";
 		System.out.println(s + " -> " + CensorItAPI.censor(s, c));
 		s = "fuck fuuck fuck fu ck FUck FUCKfu CK";
-		System.out.println(s + " -> " + CensorItAPI.censor(s, c));*/
-		String msg = "&test &&&555&&44Test";
-		System.out.println(msg = msg.replaceAll("(&+([a-f0-9]))", ""));
+		System.out.println(s + " -> " + CensorItAPI.censor(s, c));
+		s = "glasswork";
+		System.out.println(s + " -> " + CensorItAPI.censor(s, c));
+		//String msg = "&test &&&555&&44Test";
+		//System.out.println(msg = msg.replaceAll("(&+([a-f0-9]))", ""));
 	}
 
 }

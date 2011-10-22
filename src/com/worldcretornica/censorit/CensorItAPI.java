@@ -128,7 +128,7 @@ public final class CensorItAPI {
 	{
 		int currentsize;
 		int previoussize;
-		
+
 		Word initialword = word.clone();
 		word = replaceCensoredWord(word);
 
@@ -145,7 +145,7 @@ public final class CensorItAPI {
 			currentsize = word.Text.length();
 			word = replaceCensoredWord(word);
 		}while(currentsize != previoussize);
-		
+
 		if(word.Curse)
 		{
 			if (_ReplaceWithHappyWords && _HappyList.size() > 0)
@@ -168,18 +168,56 @@ public final class CensorItAPI {
 		}else{
 			word = initialword;
 		}
-		
+
 		word.Text = word.Text.replace("  ",  " ");
 		return word;
 	}
 	
 	private static Word replaceCensoredWord(Word w)
 	{
+		//System.out.println("1 " + w.Text);
+		for(String censor: _CensorList)
+		{
+			Pattern pattern = Pattern.compile(RegexCensoredWord(censor), Pattern.CASE_INSENSITIVE);
+			Matcher matcher = pattern.matcher(strip(w.Text));
+			
+			if(matcher.find())
+			{
+				w.Curse = true;
+				
+				if (_ReplaceWithHappyWords && _HappyList.size() > 0)
+				{
+					w.Text = matcher.replaceAll(" \t ");
+				}else{
+					w.Text = matcher.replaceAll(" " + repeat('\t',censor.length()) + " ");
+				}
+			}
+		}
+		return w;
+	}
+
+	private static String RegexCensoredWord(String word)
+	{
+		String newword = " *";
+		//System.out.println("a " + word);
+		//word = (word);
+		//System.out.println("b " + word);
+		for(int i = 0; i < word.length() ; i++)
+		{
+			newword = newword + word.charAt(i) + "+ *";
+		}
+		//System.out.println("c " + newword);
+		return newword;
+	}
+	
+	/*private static Word replaceCensoredWord(Word w)
+	{
+		System.out.println("1 " + w.Text);
 		for(String censor: _CensorList)
 		{
 			Pattern pattern = Pattern.compile(censor, Pattern.CASE_INSENSITIVE);
 			Matcher matcher = pattern.matcher(strip(w.Text));
-
+			
 			if(matcher.find())
 			{
 				w.Curse = true;
@@ -193,7 +231,7 @@ public final class CensorItAPI {
 			}
 		}
 		return w;
-	}
+	}*/
 	
 	private static String strip(String word)
 	{
@@ -242,14 +280,19 @@ public final class CensorItAPI {
 	
 	public static String removeSpecial(String word)
 	{
-		return word.replaceAll("[^A-Za-z0-9" + _ReplacementChar + "\t\n]", "");
+		//System.out.println("Strip: " + word);
+		word = word.replaceAll("[^A-Za-z0-9" + _ReplacementChar + " \t\n]", "");
+		//System.out.println("Strip: " + word);
+		return word;
+		//return word.replaceAll("[^A-Za-z0-9" + _ReplacementChar + "\t\n]", "");
 	}
 	
 	public static String replacePseudoLetters(String word)
 	{
 		return word.replace("4", "a").replace("1", "i").replace("@", "a")
 				.replace("3", "e").replace("!", "i").replace("5", "s")
-				.replace("$", "s").replace("0", "o");
+				.replace("$", "s").replace("0", "o").replace("/<", "k")
+				.replace("|<", "k").replace("\\/", "v");
 	}
 		
 	public static boolean isExistingWord(String word)

@@ -1,6 +1,6 @@
 name: CensorIt
 main: com.worldcretornica.censorit.CensorIt
-version: 0.1
+version: 0.3
 description: >
              Censoring API and plugin to remove all those dirty words
 commands:
@@ -31,12 +31,6 @@ commands:
     censorit disable:
         description: Disables chat censoring
         usage: censorit disable
-    censorit on:
-        description: Enables censoring for the current player
-        usage: censorit on
-    censorit off:
-        description: Disables censoring for the current player
-        usage: censorit off
     censorit reload:
         description: Reloads configuration
         usage: censorit reload
@@ -46,3 +40,9 @@ commands:
     censorit unverify:
         description: Disables online word verification
         usage: censorit unverify
+    censorit replaceon:
+        description: Enables funny word replacement
+        usage: censorit replaceon
+    censorit replaceoff:
+        description: Disables funny word replacement
+        usage: censorit replaceoff

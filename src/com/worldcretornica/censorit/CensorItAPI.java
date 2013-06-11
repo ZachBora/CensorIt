@@ -290,9 +290,10 @@ public final class CensorItAPI {
 	public static String replacePseudoLetters(String word)
 	{
 		return word.replace("4", "a").replace("1", "i").replace("@", "a")
-				.replace("3", "e").replace("!", "i").replace("5", "s")
+				.replace("|3", "b").replace("!", "i").replace("5", "s")
 				.replace("$", "s").replace("0", "o").replace("/<", "k")
-				.replace("|<", "k").replace("\\/", "v");
+				.replace("|<", "k").replace("\\/", "v").replace("8","b")
+				.replace("()","o").replace("3", "e");
 	}
 		
 	public static boolean isExistingWord(String word)

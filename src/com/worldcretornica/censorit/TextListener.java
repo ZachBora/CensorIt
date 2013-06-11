@@ -1,19 +1,21 @@
 package com.worldcretornica.censorit;
 
-import org.bukkit.event.player.PlayerChatEvent;
-import org.bukkit.event.player.PlayerListener;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 
-public class TextListener extends PlayerListener {
+public class TextListener implements Listener {
 
-	public static CensorIt plugin;
+	private CensorIt plugin;
 	
 	public TextListener(CensorIt instance)
 	{
 		plugin = instance;
 	}
 	
-	@Override
-	public void onPlayerChat(PlayerChatEvent event) {	
+	@EventHandler(priority = EventPriority.LOWEST)
+	public void onPlayerChat(final AsyncPlayerChatEvent event) {	
 		if(plugin.isEnabled)
 			event.setMessage(CensorItAPI.censor(event.getMessage()));
 		

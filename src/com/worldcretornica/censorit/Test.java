@@ -7,7 +7,7 @@ public class Test {
 	 */
 	public static void main(String[] args) {
 		
-		CensorItAPI.setVerifyWordOnline(true);
+		CensorItAPI.setVerifyWordOnline(false);
 		CensorItAPI.addCensoredWord("shit");
 		CensorItAPI.addCensoredWord("ass");
 		CensorItAPI.addCensoredWord("cock");
@@ -69,6 +69,8 @@ public class Test {
 		s = "fuck fuuck fuck fu ck FUck FUCKfu CK";
 		System.out.println(s + " -> " + CensorItAPI.censor(s, c));
 		s = "glasswork";
+		System.out.println(s + " -> " + CensorItAPI.censor(s, c));
+		s = "ass, AsS, @$$, a ss, a.ss, a s s, a_s_s";
 		System.out.println(s + " -> " + CensorItAPI.censor(s, c));
 		//String msg = "&test &&&555&&44Test";
 		//System.out.println(msg = msg.replaceAll("(&+([a-f0-9]))", ""));

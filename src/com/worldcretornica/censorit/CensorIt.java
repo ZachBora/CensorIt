@@ -12,14 +12,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import com.nijiko.permissions.PermissionHandler;
-import com.nijikokun.bukkit.Permissions.Permissions;
 
 public class CensorIt extends JavaPlugin {
 
@@ -38,10 +32,6 @@ public class CensorIt extends JavaPlugin {
 	public final String allowedfilename = "allowed.txt";
 	public final String replacementfilename = "replacement.txt";
 	
-	// Permissions
-    public PermissionHandler permissions;
-    boolean permissions3;
-	
 	@Override
 	public void onDisable() {
 		saveAllConfig();
@@ -50,14 +40,12 @@ public class CensorIt extends JavaPlugin {
 
 	@Override
 	public void onEnable() {
-		PluginManager pm = getServer().getPluginManager();
-		pm.registerEvent(Event.Type.PLAYER_CHAT, this.chatlistener, Event.Priority.Lowest, this);
+		getServer().getPluginManager().registerEvents(this.chatlistener, this);
 		
 		PluginDescriptionFile pdfFile = this.getDescription();
 		pdfdescription = pdfFile.getName();
 		pdfversion = pdfFile.getVersion();
 		
-		setupPermissions();
 		loadAllConfig();
 		
 		//Auto-save code
@@ -77,11 +65,20 @@ public class CensorIt extends JavaPlugin {
 	public boolean onCommand(CommandSender s, Command c, String l, String[] args) {
 		if (l.equalsIgnoreCase("censorit"))
 		{
+			if(s instanceof Player && !this.checkPermissions((Player) s, "CensorIt.admin") &&
+					!this.checkPermissions((Player) s, "CensorIt.word"))
+			{
+				s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
+				return false;
+			}
+			
 			if(args.length == 0 || args.length > 2)
 			{
 				s.sendMessage(ChatColor.BLUE + pdfdescription + " v" + pdfversion + " - Help");
+				/*
 				s.sendMessage(ChatColor.RED + "/censorit on" + ChatColor.WHITE + " Turn on censoring.");
 				s.sendMessage(ChatColor.RED + "/censorit off" + ChatColor.WHITE + " Turn off censoring.");
+				*/
 				if(s instanceof Player && this.checkPermissions((Player) s, "CensorIt.admin"))
 				{
 					s.sendMessage(ChatColor.RED + "/censorit config " + ChatColor.WHITE + " List configuration commands.");
@@ -97,6 +94,7 @@ public class CensorIt extends JavaPlugin {
 					if(s instanceof Player && !this.checkPermissions((Player) s, "CensorIt.admin"))
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
+						return false;
 					}else{
 						s.sendMessage(ChatColor.BLUE + pdfdescription + " v" + pdfversion + " - Configuration Commands");
 						s.sendMessage(ChatColor.RED + "/censorit enable " + ChatColor.WHITE + " Server-wide enable censoring.");
@@ -104,12 +102,15 @@ public class CensorIt extends JavaPlugin {
 						s.sendMessage(ChatColor.RED + "/censorit reload " + ChatColor.WHITE + " Reload configuration.");
 						s.sendMessage(ChatColor.RED + "/censorit verify " + ChatColor.WHITE + " SLOW! Verify words online (added to allowed list).");
 						s.sendMessage(ChatColor.RED + "/censorit unverify " + ChatColor.WHITE + " Stop verifying words online.");
+						s.sendMessage(ChatColor.RED + "/censorit replaceon " + ChatColor.WHITE + " Use the replacement words.");
+						s.sendMessage(ChatColor.RED + "/censorit replaceoff " + ChatColor.WHITE + " Stop using the replacement words.");
 					}
 				}else if(args[0].toString().equalsIgnoreCase("word"))
 				{
 					if(s instanceof Player && !this.checkPermissions((Player) s, "CensorIt.word"))
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
+						return false;
 					}else{
 						s.sendMessage(ChatColor.BLUE + pdfdescription + " v" + pdfversion + " - Configuration Commands");
 						s.sendMessage(ChatColor.RED + "/censorit censor|uncensor " + ChatColor.GREEN + "<word>");
@@ -138,6 +139,7 @@ public class CensorIt extends JavaPlugin {
 					if(s instanceof Player && !this.checkPermissions((Player) s, "CensorIt.admin"))
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
+						return false;
 					}else{
 						isEnabled = true;
 						s.sendMessage("Global censoring enabled");
@@ -147,6 +149,7 @@ public class CensorIt extends JavaPlugin {
 					if(s instanceof Player && !this.checkPermissions((Player) s, "CensorIt.admin"))
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
+						return false;
 					}else{
 						isEnabled = false;
 						s.sendMessage("Global censoring disabled");
@@ -156,6 +159,7 @@ public class CensorIt extends JavaPlugin {
 					if(s instanceof Player && !this.checkPermissions((Player) s, "CensorIt.admin"))
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
+						return false;
 					}else{
 						loadAllConfig();
 						s.sendMessage(pdfdescription + " configuration reloaded!");
@@ -165,6 +169,7 @@ public class CensorIt extends JavaPlugin {
 					if(s instanceof Player && !this.checkPermissions((Player) s, "CensorIt.admin"))
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
+						return false;
 					}else{
 						CensorItAPI.setVerifyWordOnline(true);
 						s.sendMessage("Words are now verified online, system might get slower!");
@@ -174,9 +179,30 @@ public class CensorIt extends JavaPlugin {
 					if(s instanceof Player && !this.checkPermissions((Player) s, "CensorIt.admin"))
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
+						return false;
 					}else{
 						CensorItAPI.setVerifyWordOnline(false);
 						s.sendMessage("Words are no longer verified online.");
+					}
+				}else if(args[0].toString().equalsIgnoreCase("replaceon"))
+				{
+					if(s instanceof Player && !this.checkPermissions((Player) s, "CensorIt.admin"))
+					{
+						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
+						return false;
+					}else{
+						CensorItAPI.setReplaceWithHappyWords(true);
+						s.sendMessage("Censored words are now being replaced.");
+					}
+				}else if(args[0].toString().equalsIgnoreCase("replaceoff"))
+				{
+					if(s instanceof Player && !this.checkPermissions((Player) s, "CensorIt.admin"))
+					{
+						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
+						return false;
+					}else{
+						CensorItAPI.setReplaceWithHappyWords(false);
+						s.sendMessage("Censored words are no longer being replaced.");
 					}
 				}
 			}else if(args.length == 2)
@@ -186,6 +212,7 @@ public class CensorIt extends JavaPlugin {
 					if(s instanceof Player && !this.checkPermissions((Player) s, "CensorIt.word"))
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
+						return false;
 					}else{
 						if(CensorItAPI.isCensoredWord(args[1]))
 						{
@@ -201,6 +228,7 @@ public class CensorIt extends JavaPlugin {
 					if(s instanceof Player && !this.checkPermissions((Player) s, "CensorIt.word"))
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
+						return false;
 					}else{
 						if(!CensorItAPI.isCensoredWord(args[1]))
 						{
@@ -216,6 +244,7 @@ public class CensorIt extends JavaPlugin {
 					if(s instanceof Player && !this.checkPermissions((Player) s, "CensorIt.word"))
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
+						return false;
 					}else{
 						if(CensorItAPI.isAllowedWord(args[1]))
 						{
@@ -231,6 +260,7 @@ public class CensorIt extends JavaPlugin {
 					if(s instanceof Player && !this.checkPermissions((Player) s, "CensorIt.word"))
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
+						return false;
 					}else{
 						if(!CensorItAPI.isAllowedWord(args[1]))
 						{
@@ -246,6 +276,7 @@ public class CensorIt extends JavaPlugin {
 					if(s instanceof Player && !this.checkPermissions((Player) s, "CensorIt.word"))
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
+						return false;
 					}else{
 						if(CensorItAPI.isHappyWord(args[1]))
 						{
@@ -261,6 +292,7 @@ public class CensorIt extends JavaPlugin {
 					if(s instanceof Player && !this.checkPermissions((Player) s, "CensorIt.word"))
 					{
 						s.sendMessage(ChatColor.RED +"[" + pdfdescription + "] " + " Permissions denied.");
+						return false;
 					}else{
 						if(!CensorItAPI.isHappyWord(args[1]))
 						{
@@ -378,50 +410,9 @@ public class CensorIt extends JavaPlugin {
 		return words;
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	private void setupPermissions() {
-        if(permissions != null)
-            return;
-        
-        Plugin permTest = this.getServer().getPluginManager().getPlugin("Permissions");
-        
-        // Check to see if Permissions exists
-        if (permTest == null) {
-        	logger.info("[" + pdfdescription + "] Permissions not found, using SuperPerms");
-        	return;
-        }
-    	// Check if it's a bridge
-    	if (permTest.getDescription().getVersion().startsWith("2.7.7")) {
-    		logger.info("[" + pdfdescription + "] Found Permissions Bridge. Using SuperPerms");
-    		return;
-    	}
-    	
-    	// We're using Permissions
-    	permissions = ((Permissions) permTest).getHandler();
-    	// Check for Permissions 3
-    	permissions3 = permTest.getDescription().getVersion().startsWith("3");
-    	logger.info("[" + pdfdescription + "] Permissions " + permTest.getDescription().getVersion() + " found");
-    }
-	
-	
-	
-	
-	
-	
-	
 	public Boolean checkPermissions(Player player, String node) {
-    	// Permissions
-        if (this.permissions != null) {
-            if (this.permissions.has(player, node))
-                return true;
         // SuperPerms
-        } else if (player.hasPermission(node)) {
+        if (player.hasPermission(node) || player.hasPermission(pdfdescription + ".*") || player.hasPermission("*")) {
               return true;
         } else if (player.isOp()) {
             return true;
